@@ -3,9 +3,9 @@
  *  Compilation:  javac PointSET.java
  *  Execution:   java PointSET.java
  *  Dependencies: algs4, java Arrays
- *  Author: Hólmfríður Magnea (holmfridurh17)
- *          Sindri Snær Þorsteinsson (sindrit17)
- *          Eyþór Óli Borgþórsson (eythorb19)
+ *  Author: Holmfridur Magnea (holmfridurh17)
+ *          Sindri Snaer Thorsteinsson (sindrit17)
+ *          Eythor Oli Borgthorsson (eythorb19)
  *  Date: 05.10.2020
  *
  *  Data structure for maintaining a set of 2-D points, 
@@ -42,7 +42,7 @@ public class PointSET {
     }
 
     /**
-     * Inserts the specified point into the set, if it´s not already there
+     * Inserts the specified point into the set, if its not already there
      * @param p 2DPoint
      */
     public void insert(Point2D p) {
