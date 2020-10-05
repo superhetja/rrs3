@@ -103,11 +103,13 @@ public class PointSET {
     }
 
     public static void main(String[] args) {
+
         In in = new In();
         Out out = new Out();
         int nrOfRecangles = in.readInt();
         int nrOfPointsCont = in.readInt();
         int nrOfPointsNear = in.readInt();
+
         RectHV[] rectangles = new RectHV[nrOfRecangles];
         Point2D[] pointsCont = new Point2D[nrOfPointsCont];
         Point2D[] pointsNear = new Point2D[nrOfPointsNear];
