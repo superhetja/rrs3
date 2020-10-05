@@ -50,13 +50,15 @@ public class KdTree {
 
     // does the set contain the point p?
     public boolean contains(Point2D p) {
-        return tree.contains(p);
+        return true;
+        //return tree.contains(p);
     }
 
     // draw all of the points to standard draw
     public void draw() {
         for(Point2D point : tree.keys()){
             point.draw();
+
         }
     }
 

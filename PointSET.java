@@ -1,10 +1,12 @@
 
 /****************************************************************************
  *  Compilation:  javac PointSET.java
- *  Execution:    
- *  Dependencies:
- *  Author:
- *  Date:
+ *  Execution:   java PointSET.java
+ *  Dependencies: algs4, java Arrays
+ *  Author: Hólmfríður Magnea (holmfridurh17)
+ *          Sindri Snær Þorsteinsson (sindrit17)
+ *          Eyþór Óli Borgþórsson (eythorb19)
+ *  Date: 05.10.2020
  *
  *  Data structure for maintaining a set of 2-D points, 
  *    including rectangle and nearest-neighbor queries
@@ -12,7 +14,6 @@
  *************************************************************************/
 
 import java.util.Arrays;
-
 import edu.princeton.cs.algs4.*;
 
 
@@ -20,42 +21,61 @@ public class PointSET {
     // construct an empty set of points
     private RedBlackBST<Point2D, String> tree;
 
-
     public PointSET() {
         tree = new RedBlackBST<>();
     }
 
-    // is the set empty?
+    /**
+     * Checks if the tree is empty.
+     * @return true if tree empty, else false
+     */
     public boolean isEmpty() {
         return tree.isEmpty();
     }
 
-    // number of points in the set
+    /**
+     * Get number of points in set.
+     * @return number of points.
+     */
     public int size() {
         return tree.size();
     }
 
-    // add the point p to the set (if it is not already in the set)
+    /**
+     * Inserts the specified point into the set, if it´s not already there
+     * @param p 2DPoint
+     */
     public void insert(Point2D p) {
-        tree.put(p, "point");
+        tree.put(p, "point");   //  Overwrites the old value if the set contains the point
     }
 
-    // does the set contain the point p?
+    /**
+     * Checks if a point is in the set.
+     * @param p 2DPoint
+     * @return true if set contains point, else false
+     */
     public boolean contains(Point2D p) {
-        return tree.get(p) == "point";
+        return tree.contains(p);
     }
 
-    // draw all of the points to standard draw
+    /**
+     * Draws all points using Standard Draw.
+     */
     public void draw() {
         Iterable<Point2D> points = tree.keys();
         points.forEach(point2D -> draw());
     }
 
-    // all points in the set that are inside the rectangle
+
+    /**
+     * Returns all the points in the set that are inside the rectangle.
+     * @param rect RectHV
+     * @return Queue of all 2D points within the rectangle.
+     */
     public Iterable<Point2D> range(RectHV rect) {
-        //All keys
+        //  All keys
         Iterable<Point2D> points = tree.keys();
-        //create new que to return iterable
+        //  create new queue to return iterable
         Queue<Point2D> inside = new Queue<>();
         points.forEach(point2D -> {
             if (rect.contains(point2D))
@@ -64,14 +84,16 @@ public class PointSET {
             }
         });
         return inside;
-
     }
 
-
-    // a nearest neighbor in the set to p; null if set is empty
+    /**
+     * Finds nearest neighboor.
+     * @param p Point2D
+     * @return nearest neighboor in the set, returns 0 if set is empty.
+     */
     public Point2D nearest(Point2D p) {
         Point2D nearest = tree.min();
-        // for every key in the points of the tree check if the distance is shorter and not same point
+        //  for every key in the points of the tree check if the distance is shorter and not same point
         for (Point2D point : tree.keys()){
             if ((p.distanceSquaredTo(point) < p.distanceSquaredTo(nearest)) && !(p.equals(point))) {
                 nearest = point;
