@@ -25,6 +25,7 @@ public class KdTree {
         private RectHV rect; // the axis-aligned rectangle corresponding to this node
         private Node lb; // the left/bottom subtree
         private Node rt; // the right/top subtree
+        private String dir;
         //private String lvl;
     }
 
@@ -40,66 +41,82 @@ public class KdTree {
 
     // add the point p to the set (if it is not already in the set)
     public void insert(Point2D p) {
-            root = insert(p, root, X);
+            root = insert(p, root);
 
     };
 
-    private Node insert(Point2D p, Node n,String lvl){
-        if (n == null){
+    private Node insert(Point2D p, Node n){
+        if (n == null){ // root
             RectHV rect = new RectHV(0.0, 0.0, 1.0, 1.0);
-            return createNode(p, rect);
+            String dir = X;
+            return createNode(p, rect, dir);
         }
-        if (lvl == X){
-            if (p.x() < n.p.x()) {
-                if(n.lb != null) {n.lb = insert(p, n.lb, Y);}
-                else {
-                    RectHV rect = new RectHV(n.rect.xmin(), n.rect.ymin(), n.rect.xmax(), p.y());
-                    n.lb = createNode(p, rect);
-                    return n;
+        Boolean isLeft= isLeft(p, n);
+        if (isLeft) {
+            if(n.lb != null) {n.lb = insert(p, n.lb);}
+            else {
+                String dir;
+                RectHV rect;
+                if (n.dir == X){
+                    dir = Y;
+                    rect = new RectHV(n.rect.xmin(), n.rect.ymin(), n.rect.xmax(), p.y());
                 }
+                else {
+                    dir = X;
+                    rect = new RectHV(n.rect.xmin(), n.rect.ymin(), p.x(), n.rect.ymax());
+                }
+                n.lb = createNode(p, rect, dir);
+                return n;
             }
-            else { // if(p.x() >= n.p.x())
-                if (n.rt != null) { n.rt = insert(p, n.rt, Y); }
-                else {
-                    RectHV rect = new RectHV(n.rect.xmin(), p.y(), n.rect.xmax(), n.rect.ymax());
-                    n.rt = createNode(p, rect);
-                    return n;
-                }
-                }
         }
-        else {  //if (lvl == Y)
-            if (p.y() < n.p.y()) {
-                if (n.lb != null ) { n.lb = insert(p, n.lb, X); }
-                else {
-                    RectHV rect = new RectHV(n.rect.xmin(), n.rect.ymin(), p.x(), n.rect.ymax());
-                    n.lb = createNode(p, rect);
-                    return n;
+        else { // if(p.x() >= n.p.x())
+            if (n.rt != null) { n.rt = insert(p, n.rt); }
+            else {
+                String dir;
+                RectHV rect;
+                if (n.dir == X){
+                    dir = Y;
+                    rect = new RectHV(n.rect.xmin(), p.y(), n.rect.xmax(), n.rect.ymax());
                 }
-            }
-            else { // if(p.y() >= n.p.y())
-                if ( n.rt != null ) { n.rt = insert(p, n.rt, X); }
-                else {
-                    RectHV rect = new RectHV(p.x(), n.rect.ymin(), n.rect.xmax(), n.rect.ymax());
-                    n.rt = createNode(p, rect);
-                    return n;
+                else{
+                    dir = X;
+                    rect = new RectHV(p.x(), n.rect.ymin(), n.rect.xmax(), n.rect.ymax());
                 }
+                n.rt = createNode(p, rect, dir);
+                return n;
             }
         }
         return n; //if removed, java complains about missing return statement
     }
 
-    private Node createNode (Point2D p, RectHV r) {
+    private Node createNode (Point2D p, RectHV r, String direction) {
         Node newNode = new Node();
         newNode.p = p;
         newNode.rect = r;
+        newNode.dir = direction;
         size++;
         return newNode;
     }
 
     // does the set contain the point p?
     public boolean contains(Point2D p) {
-        return true;
-        //return tree.contains(p);
+        return contains(p, root);
+    }
+
+    private boolean contains (Point2D p, Node n){
+        if (n == null) { return false; }
+        if (n.p.equals(p)) { return true; }
+        boolean isLeft = isLeft(p, n);
+        if (isLeft){
+            return contains(p, n.lb);
+            }
+        else {
+            return contains(p,n.rt);
+        }
+    }
+
+    private boolean isLeft (Point2D p, Node n){
+        return (n.dir == X ? p.x() < n.p.x() : p.y() < n.p.y());
     }
 
     // draw all of the points to standard draw
@@ -130,6 +147,7 @@ public class KdTree {
         // search in both subtrees using the following pruning rule:
         // if the closest point discovered so far is closer than the distance between the query point and the rectangle
         // corresponding to a node, there is no need to explore that node (or its subtrees).
+        // nearest closer than p distance to n.rect = if( near.distanceTo(p) < n.rect.distanceTo(p))
         // That is, a node is searched only if it might contain a point that is closer than the best one found so far.
         // The effectiveness of the pruning rule depends on quickly finding a nearby point. To do this, organize your
         // recursive method so that when there are two possible subtrees to go down, you always choose the subtree that
@@ -141,21 +159,19 @@ public class KdTree {
     private Point2D nearest(Point2D p, Node n, Point2D near){
 
         if(n == null) { return near; }
-        if (near.distanceTo(p) < n.p.distanceTo(p) && near.distanceTo(p) < n.rect.distanceTo(p)){
+
+        if( near.distanceTo(p) < n.rect.distanceTo(p)) {
             return near;
         }
         if (near.distanceTo(p) > n.p.distanceTo(p)) { near = n.p; }
-        // TODO: virkar ekki þvi lb og rt getur verið null !!
-        if (n.lb.rect.contains(p)){
-            if (n.lb.rect.distanceTo(p) < near.distanceTo(p)) { near = nearest(p, n.lb, near); }
-            if (n.rt.rect.distanceTo(p) < near.distanceTo(p)) { near = nearest(p, n.rt, near); }
+        boolean isLeft = isLeft(p, n);
+        if(isLeft){
+            near = nearest(p, n.lb, near);
+            near = nearest(p, n.rt, near);
+        }else {
+            near = nearest(p, n.rt, near);
+            near = nearest(p, n.lb, near);
         }
-
-        else { //(n.rt.rect.contains(p))
-            if (n.rt.rect.distanceTo(p) < near.distanceTo(p)) { near = nearest(p, n.rt, near); }
-            if (n.lb.rect.distanceTo(p) < near.distanceTo(p)) { near = nearest(p, n.lb, near); }
-        }
-
         return near;
     }
 
@@ -163,9 +179,10 @@ public class KdTree {
      * Test client
      ******************************************************************************/
     public static void main(String[] args) {
-        In in = new In("SomeInputs/pointInput");
-       // In in = new In();
+       // In in = new In("SomeInputs/pointInput");
+        In in = new In();
         Out out = new Out();
+
         int nrOfRecangles = in.readInt();
         int nrOfPointsCont = in.readInt();
         int nrOfPointsNear = in.readInt();
@@ -189,34 +206,26 @@ public class KdTree {
         for (int i = 0; !in.isEmpty(); i++) {
             double x = in.readDouble(), y = in.readDouble();
             set.insert(new Point2D(x, y));
+=======
+        int N = in.readInt(), C = in.readInt(), T = 50;
+        Point2D[] queries = new Point2D[C];
+        KdTree tree = new KdTree();
+        out.printf("Inserting %d points into tree\n", N);
+        for (int i = 0; i < N; i++) {
+            tree.insert(new Point2D(in.readDouble(), in.readDouble()));
         }
-        for (int i = 0; i < nrOfRecangles; i++) {
-            // Query on rectangle i, sort the result, and print
-            Iterable<Point2D> ptset = set.range(rectangles[i]);
-            int ptcount = 0;
-            for (Point2D p : ptset)
-                ptcount++;
-            Point2D[] ptarr = new Point2D[ptcount];
-            int j = 0;
-            for (Point2D p : ptset) {
-                ptarr[j] = p;
-                j++;
+        out.printf("tree.size(): %d\n", tree.size());
+        out.printf("Testing `nearest` method, querying %d points\n", C);
+
+        for (int i = 0; i < C; i++) {
+            queries[i] = new Point2D(in.readDouble(), in.readDouble());
+            out.printf("%s: %s\n", queries[i], tree.nearest(queries[i]));
+>>>>>>> a90077ed3fe97f9d094fac1d53e1135883491b57
+        }
+        for (int i = 0; i < T; i++) {
+            for (int j = 0; j < C; j++) {
+                tree.nearest(queries[j]);
             }
-            Arrays.sort(ptarr);
-            out.println("Inside rectangle " + (i + 1) + ":");
-            for (j = 0; j < ptcount; j++)
-                out.println(ptarr[j]);
         }
-        out.println("Contain test:");
-        for (int i = 0; i < nrOfPointsCont; i++) {
-            out.println((i + 1) + ": " + set.contains(pointsCont[i]));
-        }
-
-        out.println("Nearest test:");
-        for (int i = 0; i < nrOfPointsNear; i++) {
-            out.println((i + 1) + ": " + set.nearest(pointsNear[i]));
-        }
-
-        out.println();
     }
 }

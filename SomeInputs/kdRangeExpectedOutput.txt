@@ -1,0 +1,41 @@
+Inserting 16 points into tree
+tree.size(): 16
+Testing `range` method, querying 2 rectangles
+Points inside rectangle [0.2376, 0.3876] x [0.7936, 0.9436]
+(0.242, 0.935)
+Points inside rectangle [0.0344, 0.1844] x [0.0112, 0.1612]
+(0.06, 0.082)
+
+
+public static void main(String[] args) {
+    In in = new In();
+    Out out = new Out();
+    int N = in.readInt(), R = in.readInt(), T = 800;
+    RectHV[] rectangles = new RectHV[R];
+    KdTree tree = new KdTree();
+    out.printf("Inserting %d points into tree\n", N);
+    for (int i = 0; i < N; i++) {
+        tree.insert(new Point2D(in.readDouble(), in.readDouble()));
+    }
+    out.printf("tree.size(): %d\n", tree.size());
+    out.printf("Testing `range` method, querying %d rectangles\n", R);
+    ArrayList<Point2D> range = new ArrayList<Point2D>();
+    for (int i = 0; i < R; i++) {
+        rectangles[i] = new RectHV(in.readDouble(), in.readDouble(),
+                in.readDouble(), in.readDouble());
+        out.printf("Points inside rectangle %s\n", rectangles[i]);
+        for (Point2D point : tree.range(rectangles[i])) {
+            range.add(point);
+        }
+        Collections.sort(range);
+        for (Point2D point : range) {
+            out.printf("%s\n", point);
+        }
+        range.clear();
+    }
+    for (int i = 0; i < T; i++) {
+        for (int j = 0; j < rectangles.length; j++) {
+            tree.range(rectangles[j]);
+        }
+    }
+}

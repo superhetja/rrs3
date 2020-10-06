@@ -1,0 +1,28 @@
+Inserting 20 points into tree
+tree.size(): 10
+Testing contains method, querying 2 points
+(0.238, 0.104): true
+(0.807, 0.445): false
+
+public static void main(String[] args) {
+    In in = new In();
+    Out out = new Out();
+    int N = in.readInt(), C = in.readInt(), T = 20;
+    KdTree tree = new KdTree();
+    Point2D [] points = new Point2D[C];
+    out.printf("Inserting %d points into tree\n", N);
+    for (int i = 0; i < N; i++) {
+        tree.insert(new Point2D(in.readDouble(), in.readDouble()));
+    }
+    out.printf("tree.size(): %d\n", tree.size());
+    out.printf("Testing contains method, querying %d points\n", C);
+    for (int i = 0; i < C; i++) {
+        points[i] = new Point2D(in.readDouble(), in.readDouble());
+        out.printf("%s: %s\n", points[i], tree.contains(points[i]));
+    }
+    for (int i = 0; i < T; i++) {
+        for (int j = 0; j < C; j++) {
+            tree.contains(points[j]);
+        }
+    }
+}
