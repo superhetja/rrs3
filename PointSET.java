@@ -66,7 +66,6 @@ public class PointSET {
         points.forEach(point2D -> draw());
     }
 
-
     /**
      * Returns all the points in the set that are inside the rectangle.
      * @param rect RectHV
@@ -113,6 +112,7 @@ public class PointSET {
         RectHV[] rectangles = new RectHV[nrOfRecangles];
         Point2D[] pointsCont = new Point2D[nrOfPointsCont];
         Point2D[] pointsNear = new Point2D[nrOfPointsNear];
+
         for (int i = 0; i < nrOfRecangles; i++) {
             rectangles[i] = new RectHV(in.readDouble(), in.readDouble(),
                     in.readDouble(), in.readDouble());

@@ -3,21 +3,20 @@
  *************************************************************************/
 
 import java.util.Arrays;
-
 import edu.princeton.cs.algs4.*;
 
 public class KdTree {
-
     private Node root;
     private Integer size;
 
-
     private final String X = "x";
     private final String Y = "y";
+
     /**
      * Initializes an empty symbol table.
      */
     public KdTree() {
+        root = null;
         size = 0;
     }
 
@@ -164,14 +163,17 @@ public class KdTree {
      * Test client
      ******************************************************************************/
     public static void main(String[] args) {
-        In in = new In();
+        In in = new In("SomeInputs/pointInput");
+       // In in = new In();
         Out out = new Out();
         int nrOfRecangles = in.readInt();
         int nrOfPointsCont = in.readInt();
         int nrOfPointsNear = in.readInt();
+
         RectHV[] rectangles = new RectHV[nrOfRecangles];
         Point2D[] pointsCont = new Point2D[nrOfPointsCont];
         Point2D[] pointsNear = new Point2D[nrOfPointsNear];
+
         for (int i = 0; i < nrOfRecangles; i++) {
             rectangles[i] = new RectHV(in.readDouble(), in.readDouble(),
                     in.readDouble(), in.readDouble());
@@ -182,6 +184,7 @@ public class KdTree {
         for (int i = 0; i < nrOfPointsNear; i++) {
             pointsNear[i] = new Point2D(in.readDouble(), in.readDouble());
         }
+
         KdTree set = new KdTree();
         for (int i = 0; !in.isEmpty(); i++) {
             double x = in.readDouble(), y = in.readDouble();
