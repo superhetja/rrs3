@@ -2,9 +2,13 @@
 /*************************************************************************
  *************************************************************************/
 
+import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import edu.princeton.cs.algs4.*;
+import org.w3c.dom.css.Rect;
 
 public class KdTree {
 
@@ -37,91 +41,85 @@ public class KdTree {
 
     // number of points in the set
     public int size() {
-        return size();
+        return size;
     }
 
     // add the point p to the set (if it is not already in the set)
     public void insert(Point2D p) {
-            root = insert(p, root);
+        RectHV rect= new RectHV(0.0, 0.0, 1.0, 1.0);
+            root = insert(p, root, rect, true);
 
     };
+    /*
+    *
+    * @param
+    *
+    *
+     */
 
-    private Node insert(Point2D p, Node n){
+    private Node insert(Point2D p, Node n, RectHV rect, boolean xcmp){
         if (n == null){ // root
-            RectHV rect = new RectHV(0.0, 0.0, 1.0, 1.0);
-            String dir = X;
-            return createNode(p, rect, dir);
+            return createNode(p, rect);
         }
-        Boolean isLeft= isLeft(p, n);
-        if (isLeft) {
-            if(n.lb != null) {n.lb = insert(p, n.lb);}
-            else {
-                String dir;
-                RectHV rect;
-                if (n.dir == X){
-                    dir = Y;
-                    rect = new RectHV(n.rect.xmin(), n.rect.ymin(), n.rect.xmax(), p.y());
-                }
-                else {
-                    dir = X;
-                    rect = new RectHV(n.rect.xmin(), n.rect.ymin(), p.x(), n.rect.ymax());
-                }
-                n.lb = createNode(p, rect, dir);
-                return n;
-            }
+        if (n.p.equals(p)){ return n; }
+        boolean isLeft = isLeft(p, n, xcmp);
+
+        if (xcmp && isLeft) {
+            rect = new RectHV(n.rect.xmin(), n.rect.ymin(), n.p.x(), n.rect.ymax());
+            n.lb = insert(p,n.lb, rect,!xcmp);
+
         }
-        else { // if(p.x() >= n.p.x())
-            if (n.rt != null) { n.rt = insert(p, n.rt); }
-            else {
-                String dir;
-                RectHV rect;
-                if (n.dir == X){
-                    dir = Y;
-                    rect = new RectHV(n.rect.xmin(), p.y(), n.rect.xmax(), n.rect.ymax());
-                }
-                else{
-                    dir = X;
-                    rect = new RectHV(p.x(), n.rect.ymin(), n.rect.xmax(), n.rect.ymax());
-                }
-                n.rt = createNode(p, rect, dir);
-                return n;
-            }
+        else if (xcmp && !isLeft){
+            rect = new RectHV(n.p.x(), n.rect.ymin(),n.rect.xmax(), n.rect.ymax());
+            n.rt = insert(p,n.rt, rect,!xcmp);
+
+        }
+        else if (!xcmp && isLeft)
+        {
+            rect = new RectHV(n.rect.xmin(), n.rect.ymin(), n.rect.xmax(), n.p.y());
+            n.lb = insert(p,n.lb, rect,!xcmp);
+        }
+        else { //(!xcmp && !isLeft)
+            rect = new RectHV(n.rect.xmin(), n.p.y(), n.rect.xmax(), n.rect.ymax());
+            n.rt = insert(p,n.rt, rect,!xcmp);
         }
         return n; //if removed, java complains about missing return statement
     }
 
-    private Node createNode (Point2D p, RectHV r, String direction) {
+    private Node createNode (Point2D p, RectHV r) {
         Node newNode = new Node();
         newNode.p = p;
         newNode.rect = r;
-        newNode.dir = direction;
         size++;
         return newNode;
     }
 
     // does the set contain the point p?
     public boolean contains(Point2D p) {
-        return contains(p, root);
+        return contains(p, root, true);
     }
 
-    private boolean contains (Point2D p, Node n){
+    private boolean contains (Point2D p, Node n, boolean xcmp){
         if (n == null) { return false; }
         if (n.p.equals(p)) { return true; }
-        boolean isLeft = isLeft(p, n);
+        boolean isLeft = isLeft(p, n, xcmp);
         if (isLeft){
-            return contains(p, n.lb);
+            return contains(p, n.lb, !xcmp);
             }
         else {
-            return contains(p,n.rt);
+            return contains(p,n.rt, !xcmp);
         }
     }
 
-    private boolean isLeft (Point2D p, Node n){
-        return (n.dir == X ? p.x() < n.p.x() : p.y() < n.p.y());
+    private boolean isLeft (Point2D p, Node n, boolean xcmp){
+
+        return (xcmp ? p.x() < n.p.x() : p.y() < n.p.y());
     }
 
     // draw all of the points to standard draw
     public void draw() {
+        StdDraw.setPenColor(Color.PINK);
+
 
     }
 
@@ -133,31 +131,22 @@ public class KdTree {
 
     private Queue<Point2D> range(RectHV r, Queue<Point2D> inside, Node n)
     {
-        if ( n==null ) { return inside; } // veit ekki með return inside
-        if (r.intersects(n.rect)) {
-            if (r.contains(n.p)){ inside.enqueue(n.p); }
-            inside = range(r, inside, n.lb);
-            inside = range(r, inside, n.rt);
-        }
+        if ( n==null || !r.intersects(n.rect) ) { return inside; }
+        //if (!r.intersects(n.rect)) { return inside; }// veit ekki med return inside
+        if (r.contains(n.p)){ inside.enqueue(n.p); }
+        inside = range(r, inside, n.lb);
+        inside = range(r, inside, n.rt);
+
         return inside;
     }
 
     // a nearest neighbor in the set to p; null if set is empty
     public Point2D nearest(Point2D p) {
-        //Nearest neighbor search. To find a closest point to a given query point, start at the root and recursively
-        // search in both subtrees using the following pruning rule:
-        // if the closest point discovered so far is closer than the distance between the query point and the rectangle
-        // corresponding to a node, there is no need to explore that node (or its subtrees).
-        // nearest closer than p distance to n.rect = if( near.distanceTo(p) < n.rect.distanceTo(p))
-        // That is, a node is searched only if it might contain a point that is closer than the best one found so far.
-        // The effectiveness of the pruning rule depends on quickly finding a nearby point. To do this, organize your
-        // recursive method so that when there are two possible subtrees to go down, you always choose the subtree that
-        // is on the same side of the splitting line as the query point as the first subtree to explore—the closest
-        // point found while exploring the first subtree may enable pruning of the second subtree.
-        return nearest(p, root, root.p);
+        // TODO: root == null ?
+        return nearest(p, root, root.p, true);
     }
 
-    private Point2D nearest(Point2D p, Node n, Point2D near){
+    private Point2D nearest(Point2D p, Node n, Point2D near, boolean xcmp){
 
         if(n == null) { return near; }
 
@@ -165,13 +154,13 @@ public class KdTree {
             return near;
         }
         if (near.distanceTo(p) > n.p.distanceTo(p)) { near = n.p; }
-        boolean isLeft = isLeft(p, n);
+        boolean isLeft = isLeft(p, n, xcmp);
         if(isLeft){
-            near = nearest(p, n.lb, near);
-            near = nearest(p, n.rt, near);
-        }else {
-            near = nearest(p, n.rt, near);
-            near = nearest(p, n.lb, near);
+            near = nearest(p, n.lb, near, !xcmp);
+            near = nearest(p, n.rt, near, !xcmp);
+        } else {
+            near = nearest(p, n.rt, near, !xcmp);
+            near = nearest(p, n.lb, near, !xcmp);
         }
         return near;
     }
@@ -179,26 +168,36 @@ public class KdTree {
     /*******************************************************************************
      * Test client
      ******************************************************************************/
+
     public static void main(String[] args) {
         In in = new In();
         Out out = new Out();
-        int N = in.readInt(), C = in.readInt(), T = 50;
-        Point2D[] queries = new Point2D[C];
+        int N = in.readInt(), R = in.readInt(), T = 800;
+        RectHV[] rectangles = new RectHV[R];
         KdTree tree = new KdTree();
         out.printf("Inserting %d points into tree\n", N);
         for (int i = 0; i < N; i++) {
             tree.insert(new Point2D(in.readDouble(), in.readDouble()));
         }
         out.printf("tree.size(): %d\n", tree.size());
-        out.printf("Testing `nearest` method, querying %d points\n", C);
-
-        for (int i = 0; i < C; i++) {
-            queries[i] = new Point2D(in.readDouble(), in.readDouble());
-            out.printf("%s: %s\n", queries[i], tree.nearest(queries[i]));
+        out.printf("Testing `range` method, querying %d rectangles\n", R);
+        ArrayList<Point2D> range = new ArrayList<>();
+        for (int i = 0; i < R; i++) {
+            rectangles[i] = new RectHV(in.readDouble(), in.readDouble(),
+                    in.readDouble(), in.readDouble());
+            out.printf("Points inside rectangle %s\n", rectangles[i]);
+            for (Point2D point : tree.range(rectangles[i])) {
+                range.add(point);
+            }
+            Collections.sort(range);
+            for (Point2D point : range) {
+                out.printf("%s\n", point);
+            }
+            range.clear();
         }
         for (int i = 0; i < T; i++) {
-            for (int j = 0; j < C; j++) {
-                tree.nearest(queries[j]);
+            for (int j = 0; j < rectangles.length; j++) {
+                tree.range(rectangles[j]);
             }
         }
     }
