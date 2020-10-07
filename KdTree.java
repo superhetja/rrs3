@@ -118,10 +118,57 @@ public class KdTree {
 
     // draw all of the points to standard draw
     public void draw() {
-        StdDraw.setPenColor(Color.PINK);
+        StdDraw.setScale(0, 1);
+        StdDraw.setPenColor(StdDraw.BLACK);
+        StdDraw.setPenRadius(0.02);
 
+        //  Draw the frame
+        root.rect.draw();
+
+        draw(root, root.rect, false);
+    }
+
+    private void draw(Node n, RectHV rect, boolean oddLvl) {
+
+        if (n == null) return;
+
+        //  Draw
+        StdDraw.setPenColor(StdDraw.BLACK);
+        StdDraw.setPenRadius(0.01);
+        n.p.draw();
+
+        Point2D min, max;
+        //  Find min and max of the corresponding line
+        if (!oddLvl) {
+            StdDraw.setPenColor(StdDraw.RED);
+            min = new Point2D(n.p.x(), rect.ymin());
+            max = new Point2D(n.p.x(), rect.ymax());
+        }
+        else {
+            StdDraw.setPenColor(StdDraw.BLACK);
+            min = new Point2D(rect.xmin(), n.p.y());
+            max = new Point2D(rect.xmax(), n.p.y());
+        }
+
+        //  Draw corresponding line
+        StdDraw.setPenRadius();
+        min.drawTo(max);
+
+        draw(n.lb, drawRect(n, rect, oddLvl), oddLvl);
+        draw(n.rt, drawRect(n, rect, oddLvl), !oddLvl);
+    }
+
+    private RectHV drawRect(Node n, RectHV rect, boolean oddLvl) {
+
+        if (!oddLvl) {
+            return new RectHV(rect.xmin(), rect.ymin(), n.p.x(), rect.ymax());
+        }
+        else {
+            return new RectHV(rect.xmin(), rect.ymin(), rect.xmax(), n.p.y());
+        }
 
     }
+
 
     // all points in the set that are inside the rectangle
     public Iterable<Point2D> range(RectHV rect) {
@@ -179,6 +226,8 @@ public class KdTree {
         for (int i = 0; i < N; i++) {
             tree.insert(new Point2D(in.readDouble(), in.readDouble()));
         }
+
+        tree.draw();
         out.printf("tree.size(): %d\n", tree.size());
         out.printf("Testing `range` method, querying %d rectangles\n", R);
         ArrayList<Point2D> range = new ArrayList<>();
